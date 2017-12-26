@@ -31,8 +31,8 @@ parser.add_argument('-n', metavar='no output', dest='no_output',
                     const=True, default=False)
 parser.add_argument('--pprint', metavar='fmtstr', dest='fmtstr',
                     help='pretty print format string')
-parser.add_argument('--json', dest='json', action='store_const', const=True, default=False,
-                    help='output as json')
+parser.add_argument('--json', dest='json', action='store_const', const=True,
+                    default=False, help='output as json')
 parser.add_argument('--resume', metavar='name/time',
                     help='name or time to resume at')
 parser.add_argument('--stop', metavar='name/time',
