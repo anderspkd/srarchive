@@ -284,5 +284,11 @@ except KeyboardInterrupt:
     log('interrupted', WARN)
     log(f'progress info: {progress}')
 
+    # might need to close the file we're writing to.
+    try:
+        out_f.close()
+    except Exception:
+        pass
+
 log(f'total entries found: {s_entries + n_entries}')
 log(f'bye :-)')
