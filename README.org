@@ -1,0 +1,129 @@
+#+TITLE: srarchive (subreddit archiver)
+
+Small script for archiving a subreddit. (Somewhat) supports costum
+time intervals.
+
+Uses Python 3.
+
+* Usage
+
+  #+BEGIN_EXAMPLE
+$ ./srarchive.py -h
+usage: srarchive.py [-h] [-u username] [-p password] [-i id] [-s secret]
+                    [-a useragent] [-o filename] [-n] [--pprint fmtstr]
+                    [--json] [--resume name/time] [--stop name/time]
+                    [--auth-file filename] [--sleep SLEEP] [--force]
+                    subreddit
+
+Retreives entire content of subreddit.
+
+positional arguments:
+  subreddit             subreddit to archive
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u username           reddit username
+  -p password           reddit password
+  -i id                 reddit API ID
+  -s secret             reddit API secret
+  -a useragent          useragent for bot
+  -o filename           output listings to file
+  -n                    dont output anything
+  --pprint fmtstr       pretty print format string
+  --json                output as json
+  --resume name/time    name or time to resume at
+  --stop name/time      name or time to stop at
+  --auth-file filename  file with authentication info
+  --sleep SLEEP         time to sleep between requests
+  --force               dont prompt for file append
+  #+END_EXAMPLE
+
+  Easiest way to use is to place all authentication information in a
+  file, say ~auth.json~:
+  #+BEGIN_EXAMPLE
+$ cat auth.json
+{
+    "username": "reddit username",
+    "password": "reddit password",
+    "api_secret": "api secret",
+    "api_id": "api ID",
+    "useragent": "user-agent to use"
+}
+  #+END_EXAMPLE
+
+  To archive e.g. "r/funny" call
+  : ./srarchive.py --auth-file auth.json funny
+
+  By default all entries found are outputted to ~stdout~ (which is
+  kinda unreadable). Use the ~-o filename~ option to rewrite results
+  to a file. E.g.,
+  #+BEGIN_EXAMPLE
+$ ./srarchive.py --auth-file auth.json -o somefile --pprint '{title}' funny 2>/dev/null
+Furnace goes out, as soon as I got it running again, I find where the car has run to. Warmest place in the house and best heating grate.
+He Knows
+Yummy...
+Spilled Methanol fuel attracts Angry Bees.
+The greatest idea of all time
+...
+  #+END_EXAMPLE
+
+  Note that status messages are output to ~stderr~, hence the
+  ~2>/dev/null~ at the end.
+* Output
+
+  Formatting the output can be specified via the ~--pprint~ switch (as
+  shown previously). This argument expects a python format string.
+
+  If we forexample only care about time each post was made, we could
+  write:
+
+  : ./srarchive.py --auth-file auth.json --pprint '{created_utc}' funny
+
+  The ~--json~ switch outputs each entry as JSON. This is the option
+  to use if we want to save the entries for later processing.
+
+  The default option is to just run ~str~ on an entry.
+
+  Each output line is terminated by a newline.
+* Other options
+
+  There's a bunch of other options avaliable:
+
+** Output to a file
+
+   The ~-o somefile~ switch can be used to save the results to a file. I.e.,
+
+   : ./srarchive.py --auth-file auth.json -o somefile funny
+
+   is (more or less) equivilant to
+
+   : ./srarchive.py --auth-file auth.json 2>/dev/null > somefile
+
+   If ~somefile~ already exists, the result will be appended (if you
+   choose ~y~ when prompted or if the script is run with the ~--force~
+   option).
+
+** sleep
+
+   The ~--sleep t~ option will make the script sleep ~t~ seconds
+   between each request. The default value is 1.
+
+** resume
+
+   It is possible to "resume" archiving at a specific point by using
+   the ~--resume x~ option, where ~x~ is either a unix timestamp or a
+   fullname of the listing. (Only ~Links~ are supported.)
+
+** stop early
+
+   Likewise, it is possible to specify the fullname or timestamp at
+   which to stop, using the ~--stop x~ option.
+* Misc
+
+** Why don't you use PRAW?
+
+   I didn't want the script to depend on any non-standard libraries.
+
+   Besides, the script only needs to be able to call API entries at
+   ~/new~, ~/search~ and ~/about~, so using a fully featured Reddit
+   API framework seemed like overkill.
