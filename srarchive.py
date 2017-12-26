@@ -238,6 +238,10 @@ try:
             'restrict_sr': 1
         }
 
+        if 'n' in resume:
+            data['after'] = resume['n']
+            del data['q']
+
         it = get_listings(URL + '/search')
 
         for k in it:
@@ -248,8 +252,14 @@ try:
                 t_start = t_stop
                 t_stop = t_start - step_s
                 data['q'] = query_str.format(start=t_start, stop=t_stop)
+                step_s *= 2
+                if t_start < created_on:
+                    break
                 continue
             else:
+                if 'after' in data:
+                    del data['after']
+                step_s = 86_400
                 s_entries += 1
                 progress = (k['name'], int(k['created_utc']))
                 log(f'archiving ... {s_entries}', end='\r')
