@@ -258,6 +258,8 @@ try:
                 continue
             else:
                 if 'after' in data:
+                    # if we where resuming from some point, we can
+                    # delete it now.
                     del data['after']
                 step_s = 86_400
                 s_entries += 1

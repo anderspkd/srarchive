@@ -119,6 +119,9 @@ The greatest idea of all time
    the ~--resume x~ option, where ~x~ is either a unix timestamp or a
    fullname of the listing. (Only ~Links~ are supported.)
 
+   I cannot vouch for the accuracy of using fullnames for entries that
+   has to be found via ~/search~.
+
 ** stop early
 
    Likewise, it is possible to specify the fullname or timestamp at
