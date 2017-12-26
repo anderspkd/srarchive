@@ -226,10 +226,10 @@ else:
 
 # Authenticate
 try:
-    bot = _bot.Bot(usr, pwd, api_id, api_sec, user_agent)
+    bot = Bot(usr, pwd, api_id, api_sec, user_agent)
     bot.auth()
     log(f'Authenticated')
-except _bot.AuthenticationError as e:
+except AuthenticationError as e:
     log(e, ERROR)
 
 
