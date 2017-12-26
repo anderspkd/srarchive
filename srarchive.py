@@ -278,7 +278,7 @@ try:
                 t_start = progress[1]
                 t_stop = t_start - step_s
                 data['q'] = query_str.format(start=t_start, stop=t_stop)
-        log(f'entries (/search): {s_entries}')
+        log(f'entries found (/search): {s_entries}')
 
     if out_f is not None and out_f != '-':
         out_f.close()
