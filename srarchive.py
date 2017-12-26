@@ -195,6 +195,8 @@ try:
         else:
             data = {}
 
+        data['limit'] = 100
+
         it = get_listings(URL + '/new')
         for k in it:
             if k == GIMME_DATA:
@@ -207,7 +209,7 @@ try:
                 progress = (k['name'], int(k['created_utc']))
                 output(k)
                 log(f'archiving ... {n_entries}', end='\r')
-                data = {'after': progress[0]}
+                data['after'] = progress[0]
                 resume['t'] = progress[1]
                 if stop_at_n == k['name'] or stop_at_t >= k['created_utc']:
                     done = True
