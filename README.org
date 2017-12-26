@@ -71,12 +71,15 @@ The greatest idea of all time
 
 * Output
 
+  Output is can be controlled in two ways: the format of the data, and
+  where it goes.
+
 ** Output formatting
 
   Formatting the output can be specified via the ~--pprint~ switch (as
   shown previously). This argument expects a python format string.
 
-  If we forexample only care about time each post was made, we could
+  If we for example only care about the time a post was made, we could
   write:
 
   : ./srarchive.py --auth-file auth.json --pprint '{created_utc}' funny

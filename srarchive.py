@@ -12,7 +12,7 @@ import bot as _bot
 
 # Arguments
 parser = argparse.ArgumentParser(
-    description='Retreives entire content of subreddit.'
+    description='Retreives the entire content of a subreddit.'
 )
 parser.add_argument('-u', metavar='username', dest='username',
                     help='reddit username')
@@ -103,7 +103,7 @@ else:
     def output(thing):
         out_f.write(p(thing) + '\n')
 
-# Used to validate `resume' and `before' args
+# Very rough validation of `resume' and `stop' args
 pt = re.compile('^[0-9]+$')
 pn = re.compile('^t3_([a-z0-9]+)$')
 
@@ -148,7 +148,9 @@ else:
         api_sec = c['api_secret']
         user_agent = c['useragent']
 
+# Done parsing arguments
 
+# Authenticate
 try:
     bot = _bot.Bot(usr, pwd, api_id, api_sec, user_agent)
     bot.auth()
@@ -182,12 +184,11 @@ stop_at_n = stop_at.get('n')
 stop_at_t = stop_at.get('t', 0)
 
 try:
-
     progress = None
 
+    # If we're resuming from a timestamp, we will skip getting entries
+    # via. /new (even if they could be found here).
     if not skip_new:
-        # get listings via /new
-
         log(f'getting entries using {args.subreddit}/new')
 
         if 'n' in resume:
@@ -199,6 +200,8 @@ try:
 
         it = get_listings(URL + '/new')
         for k in it:
+            # if `get_listings' asks for data two times in a row, then
+            # nothing more can be found via. /new.
             if k == GIMME_DATA:
                 k = it.send(data)
             if k == GIMME_DATA:
@@ -254,7 +257,7 @@ try:
                 t_start = t_stop
                 t_stop = t_start - step_s
                 data['q'] = query_str.format(start=t_start, stop=t_stop)
-                step_s *= 2
+                step_s *= 2  # double time interval each time nothing is found
                 if t_start < created_on:
                     break
                 continue
