@@ -54,9 +54,8 @@ $ cat auth.json
   To archive e.g. "r/funny" call
   : ./srarchive.py --auth-file auth.json funny
 
-  By default all entries found are outputted to ~stdout~ (which is
-  kinda unreadable). Use the ~-o filename~ option to rewrite results
-  to a file. E.g.,
+  By default all entries found are outputted to ~stdout~. To pretty
+  print results, use the ~--pprint~ option:
   #+BEGIN_EXAMPLE
 $ ./srarchive.py --auth-file auth.json --pprint '{title}' funny 2>/dev/null
 Furnace goes out, as soon as I got it running again, I find where the car has run to. Warmest place in the house and best heating grate.
