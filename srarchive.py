@@ -205,7 +205,6 @@ try:
             if k == GIMME_DATA:
                 k = it.send(data)
             if k == GIMME_DATA:
-                log(f'entries found (/new): {n_entries:5}')
                 break
             else:
                 n_entries += 1
@@ -217,6 +216,7 @@ try:
                 if stop_at_n == k['name'] or stop_at_t >= k['created_utc']:
                     done = True
                     break
+        log(f'entries found (/new): {n_entries}')
 
     if not done:
         # get listings via /search
@@ -278,7 +278,7 @@ try:
                 t_start = progress[1]
                 t_stop = t_start - step_s
                 data['q'] = query_str.format(start=t_start, stop=t_stop)
-        log(f'entries (/search): {s_entries:5}')
+        log(f'entries (/search): {s_entries}')
 
     if out_f is not None and out_f != '-':
         out_f.close()
