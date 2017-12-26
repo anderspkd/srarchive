@@ -58,7 +58,7 @@ $ cat auth.json
   kinda unreadable). Use the ~-o filename~ option to rewrite results
   to a file. E.g.,
   #+BEGIN_EXAMPLE
-$ ./srarchive.py --auth-file auth.json -o somefile --pprint '{title}' funny 2>/dev/null
+$ ./srarchive.py --auth-file auth.json --pprint '{title}' funny 2>/dev/null
 Furnace goes out, as soon as I got it running again, I find where the car has run to. Warmest place in the house and best heating grate.
 He Knows
 Yummy...
@@ -69,7 +69,10 @@ The greatest idea of all time
 
   Note that status messages are output to ~stderr~, hence the
   ~2>/dev/null~ at the end.
+
 * Output
+
+** Output formatting
 
   Formatting the output can be specified via the ~--pprint~ switch (as
   shown previously). This argument expects a python format string.
@@ -85,23 +88,25 @@ The greatest idea of all time
   The default option is to just run ~str~ on an entry.
 
   Each output line is terminated by a newline.
-* Other options
-
-  There's a bunch of other options avaliable:
 
 ** Output to a file
 
-   The ~-o somefile~ switch can be used to save the results to a file. I.e.,
+  The ~-o somefile~ switch can be used to save the results to a file. I.e.,
 
-   : ./srarchive.py --auth-file auth.json -o somefile funny
+  : ./srarchive.py --auth-file auth.json -o somefile funny
 
-   is (more or less) equivilant to
+  is (more or less) equivilant to
 
-   : ./srarchive.py --auth-file auth.json 2>/dev/null > somefile
+  : ./srarchive.py --auth-file auth.json 2>/dev/null > somefile
 
-   If ~somefile~ already exists, the result will be appended (if you
-   choose ~y~ when prompted or if the script is run with the ~--force~
-   option).
+  If ~somefile~ already exists, the result will be appended (if you
+  choose ~y~ when prompted or if the script is run with the ~--force~
+  option).
+
+
+* Other options
+
+  There's a couple of other options avaliable:
 
 ** sleep
 
