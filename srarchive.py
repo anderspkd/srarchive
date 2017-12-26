@@ -172,7 +172,8 @@ def get_listings(url):
         time.sleep(SLEEP_T)
 
 
-total_entries = 0
+n_entries = 0
+s_entries = 0
 skip_new = 't' in resume
 done = False
 data = None
@@ -180,72 +181,94 @@ data = None
 stop_at_n = stop_at.get('n')
 stop_at_t = stop_at.get('t', 0)
 
-if not skip_new:
-    # get listings via /new
+try:
 
-    if 'n' in resume:
-        data = {'after': resume['n']}
-    else:
-        data = {}
+    progress = None
 
-    it = get_listings(URL + '/new')
-    for k in it:
-        if k == GIMME_DATA:
-            k = it.send(data)
-        if k == GIMME_DATA:
-            break
+    if not skip_new:
+        # get listings via /new
+
+        log(f'getting entries using {args.subreddit}/new')
+
+        if 'n' in resume:
+            data = {'after': resume['n']}
         else:
-            total_entries += 1
-            output(k)
-            data = {'after': k['name']}
-            resume['t'] = int(k['created_utc'])
-            if stop_at_n == k['name'] or stop_at_t >= k['created_utc']:
-                done = True
+            data = {}
+
+        it = get_listings(URL + '/new')
+        for k in it:
+            if k == GIMME_DATA:
+                k = it.send(data)
+            if k == GIMME_DATA:
+                log(f'entries found (/new): {n_entries:5}')
                 break
+            else:
+                n_entries += 1
+                progress = (k['name'], int(k['created_utc']))
+                output(k)
+                log(f'archiving ... {n_entries}', end='\r')
+                data = {'after': progress[0]}
+                resume['t'] = progress[1]
+                if stop_at_n == k['name'] or stop_at_t >= k['created_utc']:
+                    done = True
+                    break
 
-if not done:
-    # get listings via /search
-    query_str = 'timestamp:{stop}..{start}'
-    step_s = 86_400  # step one day at a time
+    if not done:
+        # get listings via /search
+        query_str = 'timestamp:{stop}..{start}'
+        step_s = 86_400  # step one day at a time
 
-    created_on = bot.get(URL + '/about').json()['data']['created']
-    log(f'subreddit "r/{args.subreddit}" created on {pp_time(created_on)[0]}')
-
-    t_start = resume.get('t', int(time.time()))
-    t_stop = stop_at.get('t', t_start)
-
-    data = {
-        'q': query_str.format(start=t_start, stop=t_stop),
-        'limit': 100,
-        'syntax': 'cloudsearch',
-        'sort': 'new',
-        'restrict_sr': 1
-    }
-
-    it = get_listings(URL + '/search')
-
-    for k in it:
-        if k == GIMME_DATA:
-            k = it.send(data)
-        # No entries found in the time interval
-        if k == GIMME_DATA:
-            t_start = t_stop
-            t_stop = t_start - step_s
-            data['q'] = query_str.format(start=t_start, stop=t_stop)
-            continue
+        # small hack to avoid printing a meaningless message
+        if 't' in stop_at:
+            created_on = stop_at['t']
         else:
-            total_entries += 1
-            output(k)
-            if stop_at_n == k['name'] or stop_at_t >= k['created_utc']:
-                break
-            t_start = int(k['created_utc'])
-            t_stop = t_start - step_s
-            data['q'] = query_str.format(start=t_start, stop=t_stop)
+            created_on = int(bot.get(URL + '/about').json()['data']['created'])
+            log(f'subreddit "r/{args.subreddit}" created on {pp_time(created_on)[0]}')
 
-if out_f is not None and out_f != '-':
-    try:
+        t_start = resume.get('t', int(time.time()))
+        t_stop = stop_at.get('t', t_start)
+
+        log(f'getting entries using {args.subreddit}/search')
+
+        data = {
+            'q': query_str.format(start=t_start, stop=t_stop),
+            'limit': 100,
+            'syntax': 'cloudsearch',
+            'sort': 'new',
+            'restrict_sr': 1
+        }
+
+        it = get_listings(URL + '/search')
+
+        for k in it:
+            if k == GIMME_DATA:
+                k = it.send(data)
+            # No entries found in the time interval
+            if k == GIMME_DATA:
+                t_start = t_stop
+                t_stop = t_start - step_s
+                data['q'] = query_str.format(start=t_start, stop=t_stop)
+                continue
+            else:
+                s_entries += 1
+                progress = (k['name'], int(k['created_utc']))
+                log(f'archiving ... {s_entries}', end='\r')
+                output(k)
+                if stop_at_n == progress[0] or stop_at_t >= progress[1]:
+                    break
+                if progress[1] <= created_on:
+                    break
+                t_start = progress[1]
+                t_stop = t_start - step_s
+                data['q'] = query_str.format(start=t_start, stop=t_stop)
+        log(f'entries (/search): {s_entries:5}')
+
+    if out_f is not None and out_f != '-':
         out_f.close()
-    except Exception:
-        pass
 
-log(f'Found {total_entries} entries')
+except KeyboardInterrupt:
+    log('interrupted', WARN)
+    log(f'progress info: {progress}')
+
+log(f'total entries found: {s_entries + n_entries}')
+log(f'bye :-)')

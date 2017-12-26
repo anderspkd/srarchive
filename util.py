@@ -7,16 +7,21 @@ ERROR = 2
 
 
 def log(msg, level=NORMAL, end='\n'):
+    f = sys.stdout
     if level == NORMAL:
         pre = '[ ]'
-        sys.stderr.write(f'{pre} {msg}{end}')
-    if level == WARN:
+        f.write(f'{pre} {msg}{end}')
+    elif level == WARN:
         pre = '[W]'
-        sys.stderr.write(f'{pre} {msg}{end}')
-    if level == ERROR:
+        f.write(f'{pre} {msg}{end}')
+    elif level == ERROR:
         pre = '[E]'
-        sys.stderr.write(f'{pre} {msg}{end}')
+        f.write(f'{pre} {msg}{end}')
         exit(1)
+    else:
+        f.write(f'[F] unknown logging level {level}\n')
+        exit(1)
+    f.flush()
 
 
 # Parse UNIX timestamp as something readable.
