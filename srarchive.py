@@ -29,6 +29,10 @@ parser.add_argument('-o', metavar='filename', dest='output',
 parser.add_argument('-n', metavar='no output', dest='no_output',
                     help='dont output anything', action='store_const',
                     const=True, default=False)
+parser.add_argument('--pprint', metavar='fmtstr', dest='fmtstr',
+                    help='pretty print format string')
+parser.add_argument('--json', dest='json', action='store_const', const=True, default=False,
+                    help='output as json')
 parser.add_argument('--resume', metavar='name/time',
                     help='name or time to resume at')
 parser.add_argument('--stop', metavar='name/time',
@@ -47,6 +51,25 @@ URL = f'https://oauth.reddit.com/r/{args.subreddit}'
 SLEEP_T = 1 if args.sleep is None else args.sleep
 out_f = args.output
 
+if args.json and args.fmtstr is not None:
+    log('Cannot set both json and pprint', ERROR)
+
+if args.json:
+    log('Outputting json formatted data')
+
+    def p(entry):
+        return json.dumps(entry)
+elif args.fmtstr:
+    log(f'Outputting using format string: "{args.fmtstr}"')
+
+    def p(entry):
+        return args.fmtstr.format(**entry)
+else:
+    log('Outputting using "str"')
+
+    def p(entry):
+        return str(entry)
+
 if args.no_output:
 
     def output(*args, **kwargs):
@@ -56,7 +79,7 @@ elif out_f is None or out_f == '-':
     log('outputting to stdout')
 
     def output(thing):
-        sys.stdout.write(json.dumps(thing) + '\n')
+        sys.stdout.write(p(thing) + '\n')
 
 elif os.path.exists(out_f):
 
@@ -72,13 +95,13 @@ elif os.path.exists(out_f):
         log(f'Wont append to "{args.output}". Exiting', ERROR)
 
     def output(thing):
-        out_f.write(json.dumps(thing) + '\n')
+        out_f.write(p(thing) + '\n')
 
 else:
     out_f = open(out_f, 'w')
 
     def output(thing):
-        out_f.write(json.dumps(thing) + '\n')
+        out_f.write(p(thing) + '\n')
 
 # Used to validate `resume' and `before' args
 pt = re.compile('^[0-9]+$')

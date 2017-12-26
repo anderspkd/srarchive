@@ -9,13 +9,13 @@ ERROR = 2
 def log(msg, level=NORMAL, end='\n'):
     if level == NORMAL:
         pre = '[ ]'
-        sys.stdout.write(f'{pre} {msg}{end}')
+        sys.stderr.write(f'{pre} {msg}{end}')
     if level == WARN:
         pre = '[W]'
-        sys.stdout.write(f'{pre} {msg}{end}')
+        sys.stderr.write(f'{pre} {msg}{end}')
     if level == ERROR:
         pre = '[E]'
-        sys.stdout.write(f'{pre} {msg}{end}')
+        sys.stderr.write(f'{pre} {msg}{end}')
         exit(1)
 
 
