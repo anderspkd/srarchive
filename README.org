@@ -107,7 +107,7 @@ The greatest idea of all time
    prompt you for whether or not results should be appended to ~somefile~. That is
    #+BEGIN_EXAMPLE
 $ touch somefile
-$ ./srarchive.py --auth-file auth.json funny -o bla
+$ ./srarchive.py --auth-file auth.json funny -o somefile
 [ ] will output using "str"
 [W] file somefile exists. Append to file? (y/n)
    #+END_EXAMPLE
