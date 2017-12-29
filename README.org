@@ -1,9 +1,8 @@
 #+TITLE: srarchive (subreddit archiver)
 
-Small script for archiving a subreddit. (Somewhat) supports costum
-time intervals.
+Script for archiving a subreddit. Supports resuming and stopping.
 
-Uses Python 3.
+Uses Python 3 and the requests library.
 
 * Usage
 
@@ -38,8 +37,7 @@ optional arguments:
   --force               dont prompt for file append
   #+END_EXAMPLE
 
-  Easiest way to use is to place all authentication information in a
-  file, say ~auth.json~:
+  The easiest way to get started, is to put all authentication information into a file, e.g., ~auth.json~, and then use the ~--auth-file~ argument, like so:
   #+BEGIN_EXAMPLE
 $ cat auth.json
 {
@@ -49,13 +47,14 @@ $ cat auth.json
     "api_id": "api ID",
     "useragent": "user-agent to use"
 }
+$ ./srarchive.py --auth-file auth.json funny
+[ ] will output using "str"
+[ ] Authenticated
+...
   #+END_EXAMPLE
 
-  To archive e.g. "r/funny" call
-  : ./srarchive.py --auth-file auth.json funny
+  It is possible to control the format of the output, by using ~--json~ or ~--pprint <fmtstr>~. For example:
 
-  By default all entries found are outputted to ~stdout~. To pretty
-  print results, use the ~--pprint~ option:
   #+BEGIN_EXAMPLE
 $ ./srarchive.py --auth-file auth.json --pprint '{title}' funny 2>/dev/null
 Furnace goes out, as soon as I got it running again, I find where the car has run to. Warmest place in the house and best heating grate.
@@ -66,45 +65,55 @@ The greatest idea of all time
 ...
   #+END_EXAMPLE
 
-  Note that status messages are output to ~stderr~, hence the
-  ~2>/dev/null~ at the end.
+  Note that status messages goes to ~stderr~.
 
 * Output
 
-  Output is can be controlled in two ways: the format of the data, and
-  where it goes.
+  Output is can be controlled in two ways: the format of the data, and where it goes.
 
 ** Output formatting
 
-  Formatting the output can be specified via the ~--pprint~ switch (as
-  shown previously). This argument expects a python format string.
+   Using the ~--pprint~ switch, it is possible to format the output using Python's format strings.
+   That is, ~--pprint fmtstr~ means we will be running
+   : fmtstr.format(**entry)
+   on each entry (i.e. post on the subreddit in question).
 
-  If we for example only care about the time a post was made, we could
-  write:
+   For example, to extract the title, we can use
+   : --pprint '{title}'
+   To extract the URL we can use
+   : --pprint '{url}'
 
-  : ./srarchive.py --auth-file auth.json --pprint '{created_utc}' funny
 
-  The ~--json~ switch outputs each entry as JSON. This is the option
-  to use if we want to save the entries for later processing.
+   It is, of course possible to write more complex format strings. E.g.
+   : --pprint '{author} got {score} upvotes for "{title}"'
+   to print both OP, number of upvotes and the title of a post.
 
-  The default option is to just run ~str~ on an entry.
 
-  Each output line is terminated by a newline.
+   In addition to formatted output, it is also possible to simply output an entry as JSON.
+   This is done by supplying the ~--json~ flag.
 
 ** Output to a file
 
-  The ~-o somefile~ switch can be used to save the results to a file. I.e.,
+   By default output goes to ~stdout~.
+   It is possible to entirly turn off output (e.g. for the sake of debugging) by using the ~-n~ option.
 
-  : ./srarchive.py --auth-file auth.json -o somefile funny
+   It is possible to direct output to a file, either by using shell redirection or by using the ~-o~ flag.
+   The difference between
+   : ./srarchive.py --auth-file auth.json -o somefile funny
+   and
+   : ./srarchive.py --auth-file auth.json 2>/dev/null > somefile
 
-  is (more or less) equivilant to
+   Is that, in the case ~somefile~ already exists (for example, is the result of a previous run) the former will
+   prompt you for whether or not results should be appended to ~somefile~. That is
+   #+BEGIN_EXAMPLE
+$ touch somefile
+$ ./srarchive.py --auth-file auth.json funny -o bla
+[ ] will output using "str"
+[W] file somefile exists. Append to file? (y/n)
+   #+END_EXAMPLE
+   It is possible to skip the prompt by supplying the ~--force~ flag.
 
-  : ./srarchive.py --auth-file auth.json 2>/dev/null > somefile
-
-  If ~somefile~ already exists, the result will be appended (if you
-  choose ~y~ when prompted or if the script is run with the ~--force~
-  option).
-
+   Note that each entry is terminated by a newline---the number of lines in ~somefile~ will correspond to the number of posts that have been fetched from the subredddit.
 
 * Other options
 
@@ -112,28 +121,22 @@ The greatest idea of all time
 
 ** sleep
 
-   The ~--sleep t~ option will make the script sleep ~t~ seconds
-   between each request. The default value is 1.
+   The ~--sleep t~ option will make the script sleep ~t~ seconds between each request.
+   The default value is 1.
 
 ** resume
 
-   It is possible to "resume" archiving at a specific point by using
-   the ~--resume x~ option, where ~x~ is either a unix timestamp or a
-   fullname of the listing. (Only ~Links~ are supported.)
-
-   I cannot vouch for the accuracy of using fullnames for entries that
-   has to be found via ~/search~.
+   Resumption can be controlled by the ~--resume v~ argument, where ~v~ is either a UNIX timestamp or a fullname
+   (A fullname is a string of the form ~t3_base36~ data. See description [[https://www.reddit.com/dev/api/#fullnames][here]].)
 
 ** stop early
 
-   Likewise, it is possible to specify the fullname or timestamp at
-   which to stop, using the ~--stop x~ option.
+   Stopping early is also possible: Much as with resumption, you can use ~--stop v~ (~v~ again being a UNIX timestamp or fullname)
+   to specify when the script should stop.
+
 * Misc
 
 ** Why don't you use PRAW?
 
-   I didn't want the script to depend on any non-standard libraries.
-
-   Besides, the script only needs to be able to call API entries at
-   ~/new~, ~/search~ and ~/about~, so using a fully featured Reddit
-   API framework seemed like overkill.
+   The script only needs to query ~/new~, ~/search~ and maybe ~/about~, so the need for a
+   full Reddit API wrapper seemed a bit overkill.

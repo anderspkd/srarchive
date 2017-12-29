@@ -9,31 +9,31 @@ import sys
 import json
 import datetime
 
-# Utility functions
+# Logging. NORMAL is the default. ERROR will make the script exit.
 NORMAL = 0
 WARN = 1
 ERROR = 2
+_LOG = sys.stderr
 
 
 def log(msg, level=NORMAL, end='\n'):
-    f = sys.stdout
     if level == NORMAL:
         pre = '[ ]'
-        f.write(f'{pre} {msg}{end}')
+        _LOG.write(f'{pre} {msg}{end}')
     elif level == WARN:
         pre = '[W]'
-        f.write(f'{pre} {msg}{end}')
+        _LOG.write(f'{pre} {msg}{end}')
     elif level == ERROR:
         pre = '[E]'
-        f.write(f'{pre} {msg}{end}')
+        _LOG.write(f'{pre} {msg}{end}')
         exit(1)
     else:
-        f.write(f'[F] unknown logging level {level}\n')
-        exit(1)
-    f.flush()
+        log(f'Unknown log level: {level}', ERROR)
+    _LOG.flush()
 
 
-# Parse UNIX timestamp as something readable.
+# Parse and return a UNIX timestamp as something suitable for
+# printing.
 def pp_time(timestamp):
     if timestamp is not None:
         ts = datetime.datetime.fromtimestamp(
@@ -42,12 +42,11 @@ def pp_time(timestamp):
     return (ts or 'N/A', timestamp or 'N/A')
 
 
-# Bot stuff
 class AuthenticationError(Exception):
     pass
 
 
-# A simple bot that can authenticate and perform GET and POST requests
+# A "bot" than can authenticate and perform GET and POST requests.
 class Bot:
 
     def __init__(self, username, password, api_id, api_secret, user_agent):
@@ -85,64 +84,52 @@ class Bot:
 
 
 # Arguments
-parser = argparse.ArgumentParser(
-    description='Retreives the entire content of a subreddit.'
-)
-parser.add_argument('-u', metavar='username', dest='username',
-                    help='reddit username')
-parser.add_argument('-p', metavar='password', dest='password',
-                    help='reddit password')
-parser.add_argument('-i', metavar='id', dest='api_id',
-                    help='reddit API ID')
-parser.add_argument('-s', metavar='secret', dest='api_secret',
-                    help='reddit API secret')
-parser.add_argument('-a', metavar='useragent', dest='useraget',
-                    help='useragent for bot')
-parser.add_argument('-o', metavar='filename', dest='output',
-                    help='output listings to file')
-parser.add_argument('-n', metavar='no output', dest='no_output',
-                    help='dont output anything', action='store_const',
-                    const=True, default=False)
-parser.add_argument('--pprint', metavar='fmtstr', dest='fmtstr',
-                    help='pretty print format string')
-parser.add_argument('--json', dest='json', action='store_const', const=True,
-                    default=False, help='output as json')
-parser.add_argument('--resume', metavar='name/time',
-                    help='name or time to resume at')
-parser.add_argument('--stop', metavar='name/time',
-                    help='name or time to stop at')
-parser.add_argument('--auth-file', metavar='filename',
-                    help='file with authentication info')
-parser.add_argument('--sleep', help='time to sleep between requests',
-                    type=float)
-parser.add_argument('--force', help='dont prompt for file append',
-                    action='store_const', const=True, default=False)
-parser.add_argument('subreddit', help='subreddit to archive')
+parser = argparse.ArgumentParser(description='Retreives the entire content of a subreddit.')
+parser.add_argument('-u', help='reddit username', metavar='username', dest='username')
+parser.add_argument('-p', help='reddit password', metavar='password', dest='password')
+parser.add_argument('-i', help='reddit API ID', metavar='id', dest='api_id')
+parser.add_argument('-s', help='reddit API secret', metavar='secret', dest='api_secret')
+parser.add_argument('-a', help='useragent for bot', metavar='useragent', dest='useraget')
+parser.add_argument('-o', help='output listings to file', metavar='filename', dest='output')
+parser.add_argument('-n', help='dont output anything', metavar='no output', dest='no_output', action='store_const', const=True, default=False)
+parser.add_argument('--pprint',    help='pretty print format string', metavar='fmtstr', dest='fmtstr')
+parser.add_argument('--json',      help='output as json', dest='json', action='store_const', const=True, default=False)
+parser.add_argument('--resume',    help='name or time to resume at', metavar='name/time')
+parser.add_argument('--stop',      help='name or time to stop at', metavar='name/time')
+parser.add_argument('--auth-file', help='file with authentication info', metavar='filename')
+parser.add_argument('--sleep',     help='time to sleep between requests', type=float)
+parser.add_argument('--force',     help='dont prompt for file append', action='store_const', const=True, default=False)
+parser.add_argument('subreddit',   help='subreddit to archive')
 
 args = parser.parse_args()
 
 URL = f'https://oauth.reddit.com/r/{args.subreddit}'
 SLEEP_T = 1 if args.sleep is None else args.sleep
-out_f = args.output
 
+# Format argument(s)
 if args.json and args.fmtstr is not None:
     log('Cannot set both json and pprint', ERROR)
 
 if args.json:
-    log('Outputting json formatted data')
+    log('will output json formatted data')
 
     def p(entry):
         return json.dumps(entry)
+
 elif args.fmtstr:
-    log(f'Outputting using format string: "{args.fmtstr}"')
+    log(f'will output using format string: "{args.fmtstr}"')
 
     def p(entry):
         return args.fmtstr.format(**entry)
+
 else:
-    log('Outputting using "str"')
+    log('will output using "str"')
 
     def p(entry):
         return str(entry)
+
+# Output arguments
+out_f = args.output
 
 if args.no_output:
 
@@ -150,7 +137,7 @@ if args.no_output:
         pass
 
 elif out_f is None or out_f == '-':
-    log('outputting to stdout')
+    log('output goes to stdout')
 
     def output(thing):
         sys.stdout.write(p(thing) + '\n')
@@ -158,12 +145,12 @@ elif out_f is None or out_f == '-':
 elif os.path.exists(out_f):
 
     if not args.force:
-        c = input(f'[W] file {out_f} exists. Append to end (y/n)? ')
+        c = input(f'[W] file {out_f} exists. Append to file? (y/n) ')
     else:
         c = 'y'
 
     if c.lower() == 'y':
-        log(f'Append to file "{args.output}"', WARN)
+        log(f'Appending to file "{args.output}"', WARN)
         out_f = open(out_f, 'a')
     else:
         log(f'Wont append to "{args.output}". Exiting', ERROR)
@@ -177,21 +164,20 @@ else:
     def output(thing):
         out_f.write(p(thing) + '\n')
 
-# Very rough validation of `resume' and `stop' args
+# Resume/stop arguments. We only perform some very rough validation of
+# a timestamp/fullname.
 pt = re.compile('^[0-9]+$')
 pn = re.compile('^t3_([a-z0-9]+)$')
-
 resume = {}
 stop_at = {}
-
 if args.resume is not None:
     if pt.match(args.resume):
         resume = {'t': int(args.resume)}
     elif pn.match(args.resume):
         resume = {'n': args.resume}
     else:
-        log(f'Invalid value for resume: {args.resume}', ERROR)
-    log(f'Will resume at "{args.resume}"')
+        log(f'invalid value for resume: {args.resume}', ERROR)
+    log(f'will resume at "{args.resume}"')
 
 if args.stop is not None:
     if pt.match(args.stop):
@@ -202,11 +188,10 @@ if args.stop is not None:
         log(f'Invalid value for before: {args.stop}', ERROR)
     log(f'Will stop at "{args.stop}"')
 
-# Parse authentication information
+# Authentication
 if args.auth_file is None:
-    if None in (args.api_id, args.api_secret, args.username, args.password):
-        parser.print_help()
-        exit(1)
+    if None in (args.api_id, args.api_secret, args.username, args.password, args.useragent):
+        log('Missing authentication info', ERROR)
     else:
         usr = args.username
         pwd = args.password
@@ -222,9 +207,8 @@ else:
         api_sec = c['api_secret']
         user_agent = c['useragent']
 
-# Done parsing arguments
 
-# Authenticate
+# Create a bot object and authenticate
 try:
     bot = Bot(usr, pwd, api_id, api_sec, user_agent)
     bot.auth()
@@ -237,8 +221,8 @@ except AuthenticationError as e:
 GIMME_DATA = 123
 
 
-# Helper to get data via new and search functions. Stops if no data
-# is found or data (as passed by the caller) is None.
+# Helper function that yields data obtained from the reddit API
+# (via. url). GIMME_DATA signals that a new request needs to be made.
 def get_listings(url):
     while True:
         data = yield GIMME_DATA
@@ -258,6 +242,7 @@ stop_at_n = stop_at.get('n')
 stop_at_t = stop_at.get('t', 0)
 
 try:
+    # Keep track of how far (timestamp/fullname) we are.
     progress = None
 
     # If we're resuming from a timestamp, we will skip getting entries
@@ -293,7 +278,6 @@ try:
         log(f'entries found (/new): {n_entries}')
 
     if not done:
-        # get listings via /search
         query_str = 'timestamp:{stop}..{start}'
         step_s = 86_400  # step one day at a time
 
@@ -317,12 +301,14 @@ try:
             'restrict_sr': 1
         }
 
+        # If we're resuming from a fullname, then we need to remove
+        # the timestamp query. Otherwise nothing will (probably) be
+        # returned.
         if 'n' in resume:
             data['after'] = resume['n']
             del data['q']
 
         it = get_listings(URL + '/search')
-
         for k in it:
             if k == GIMME_DATA:
                 k = it.send(data)
@@ -332,22 +318,23 @@ try:
                 t_stop = t_start - step_s
                 data['q'] = query_str.format(start=t_start, stop=t_stop)
                 step_s *= 2  # double time interval each time nothing is found
-                if t_start < created_on:
+                if created_on >= t_start:
                     break
                 continue
             else:
+                # Remove the fullname that we resumed from, so that we
+                # can start to search by timestamps instead.
                 if 'after' in data:
-                    # if we where resuming from some point, we can
-                    # delete it now.
                     del data['after']
                 step_s = 86_400
                 s_entries += 1
                 progress = (k['name'], int(k['created_utc']))
                 log(f'archiving ... {s_entries}', end='\r')
                 output(k)
-                if stop_at_n == progress[0] or stop_at_t >= progress[1]:
-                    break
-                if progress[1] <= created_on:
+                # We stop if we're (1) at a time/fullname that the
+                # stop argument told us to stop at, or (2) we're past
+                # the subreddit's creation date.
+                if stop_at_n == progress[0] or stop_at_t >= progress[1] or created_on >= progress[1]:
                     break
                 t_start = progress[1]
                 t_stop = t_start - step_s
@@ -361,11 +348,12 @@ except KeyboardInterrupt:
     log('interrupted', WARN)
     log(f'progress info: {progress}')
 
-    # might need to close the file we're writing to.
-    try:
-        out_f.close()
-    except Exception:
-        pass
+    # Might need to close the file we're writing to.
+    if out_f is not None and out_f != '-':
+        try:
+            out_f.close()
+        except Exception:
+            pass
 
 log(f'total entries found: {s_entries + n_entries}')
 log(f'bye :-)')
