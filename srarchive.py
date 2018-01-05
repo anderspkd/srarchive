@@ -163,6 +163,9 @@ elif os.path.exists(out_f):
         out_f.write(p(thing) + '\n')
 
 else:
+
+    log(f'Writing to file: "{out_f}"')
+
     out_f = open(out_f, 'w')
 
     def output(thing):
