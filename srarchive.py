@@ -101,6 +101,10 @@ parser.add_argument('--sleep',     help='time to sleep between requests', type=f
 parser.add_argument('--force',     help='dont prompt for file append', action='store_const', const=True, default=False)
 parser.add_argument('subreddit',   help='subreddit to archive')
 
+if len(sys.argv) == 1:
+    parser.print_help()
+    exit(0)
+
 args = parser.parse_args()
 
 URL = f'https://oauth.reddit.com/r/{args.subreddit}'
