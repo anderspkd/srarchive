@@ -97,7 +97,7 @@ parser.add_argument('--json',      help='output as json', dest='json', action='s
 parser.add_argument('--resume',    help='name or time to resume at', metavar='name/time')
 parser.add_argument('--stop',      help='name or time to stop at', metavar='name/time')
 parser.add_argument('--auth-file', help='file with authentication info', metavar='filename')
-parser.add_argument('--sleep',     help='time to sleep between requests', type=float)
+parser.add_argument('--sleep',     help='time to sleep between requests', type=float, metavar='float')
 parser.add_argument('--force',     help='dont prompt for file append', action='store_const', const=True, default=False)
 parser.add_argument('subreddit',   help='subreddit to archive')
 
