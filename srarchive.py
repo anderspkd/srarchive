@@ -84,7 +84,7 @@ class Bot:
 
 
 # Arguments
-parser = argparse.ArgumentParser(description='Retreives the entire content of a subreddit.')
+parser = argparse.ArgumentParser(description='Retreives the content of a subreddit.')
 parser.add_argument('-u', help='reddit username', metavar='username', dest='username')
 parser.add_argument('-p', help='reddit password', metavar='password', dest='password')
 parser.add_argument('-i', help='reddit API ID', metavar='id', dest='api_id')
