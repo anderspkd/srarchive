@@ -233,7 +233,11 @@ GIMME_DATA = 123
 def get_listings(url):
     while True:
         data = yield GIMME_DATA
-        stuff = bot.get(url, params=data).json()['data']
+        stuff = bot.get(url, params=data).json()
+        if 'error' in stuff:
+            log(f'Could not fetch data. Reddit says: "{stuff["message"]}"', ERROR)
+        else:
+            stuff = stuff['data']
         for k in stuff['children']:
             yield k['data']
         time.sleep(SLEEP_T)
