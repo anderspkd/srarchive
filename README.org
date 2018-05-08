@@ -1,5 +1,10 @@
 #+TITLE: srarchive (subreddit archiver)
 
+*Note*: Reddit is no longer supporting the timestamp search function,
+so searching beyond the initial ~1000 posts is no longer
+supported. For more information about this frankly insane downgrade,
+see: https://www.reddit.com/r/changelog/comments/7tus5f/update_to_search_api/
+
 Script for archiving a subreddit. Supports resuming and stopping.
 
 Uses Python 3 and the requests library.
