@@ -14,6 +14,12 @@ NORMAL = 0
 WARN = 1
 ERROR = 2
 _LOG = sys.stderr
+DEBUG = False
+
+
+def debug(msg):
+    if DEBUG:
+        log(msg)
 
 
 def log(msg, level=NORMAL, end='\n'):
@@ -50,6 +56,7 @@ class AuthenticationError(Exception):
 class Bot:
 
     def __init__(self, username, password, api_id, api_secret, user_agent):
+        debug(f'Bot initialized on username={username}, password=..., api_id={api_id}, api_secret=..., user_agent={user_agent}')
         self.usr = username
         self.pwd = password
         self.id = api_id
@@ -57,10 +64,15 @@ class Bot:
         self.headers = {'User-Agent': user_agent}
 
     def post(self, url, **kwargs):
-        return requests.post(url, headers=self.headers, **kwargs)
+        debug(f'Bot POST: url={url}, args={kwargs}, headers={self.headers}')
+        r = requests.post(url, headers=self.headers, **kwargs)
+        debug(f'Bot POST: response={r}')
+        return r
 
     def get(self, url, **kwargs):
+        debug(f'Bot GET: url={url}, args={kwargs}, headers={self.headers}')
         r = requests.get(url, headers=self.headers, **kwargs)
+        debug(f'Bot GET: response={r}')
         return r
 
     def auth(self):
@@ -76,6 +88,7 @@ class Bot:
             data=data
         )
         token = resp.json().get('access_token')
+        debug(f'Access token={token}')
 
         if token is None:
             raise AuthenticationError(f'Could not authenticate: {resp.json()}')
@@ -92,6 +105,7 @@ parser.add_argument('-s', help='reddit API secret', metavar='secret', dest='api_
 parser.add_argument('-a', help='useragent for bot', metavar='useragent', dest='useraget')
 parser.add_argument('-o', help='output listings to file', metavar='filename', dest='output')
 parser.add_argument('-n', help='dont output anything', metavar='no output', dest='no_output', action='store_const', const=True, default=False)
+parser.add_argument('--debug',     help='output more information ftso. debugging', dest='debug', action='store_const', const=True, default=False)
 parser.add_argument('--pprint',    help='pretty print format string', metavar='fmtstr', dest='fmtstr')
 parser.add_argument('--json',      help='output as json', dest='json', action='store_const', const=True, default=False)
 parser.add_argument('--resume',    help='name or time to resume at', metavar='name/time')
@@ -109,6 +123,7 @@ args = parser.parse_args()
 
 URL = f'https://oauth.reddit.com/r/{args.subreddit}'
 SLEEP_T = 1 if args.sleep is None else args.sleep
+DEBUG = args.debug
 
 # Format argument(s)
 if args.json and args.fmtstr is not None:
@@ -214,7 +229,6 @@ else:
         api_sec = c['api_secret']
         user_agent = c['useragent']
 
-
 # Create a bot object and authenticate
 try:
     bot = Bot(usr, pwd, api_id, api_sec, user_agent)
@@ -222,6 +236,11 @@ try:
     log(f'Authenticated')
 except AuthenticationError as e:
     log(e, ERROR)
+
+
+if DEBUG:
+    debug(f'Trying /api/v1/me ...')
+    r = bot.get('https://oauth.reddit.com/api/v1/me')
 
 
 # iterator stuff
